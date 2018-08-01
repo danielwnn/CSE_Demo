@@ -1,0 +1,93 @@
+<script language="JavaScript">
+    $(document).ready(function ()
+    {
+        // draw rectangles around faces
+        function markFaces(result)
+        {
+            var canvas = document.getElementById("imgCanvas");
+            var ctx = canvas.getContext("2d");
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 3;
+            for (var i = 0, len = result.length; i < len; i++) {
+                var faceRect = result[i].faceRectangle;
+                ctx.strokeRect(
+                    Math.floor(faceRect.left / window.ratio),
+                    Math.floor(faceRect.top / window.ratio),
+                    Math.floor(faceRect.width / window.ratio),
+                    Math.floor(faceRect.height / window.ratio)
+                );
+            }
+        }
+
+        // face detection through ajax call
+        function detectFaces()
+        {
+            // clear message
+            $('#msgPhoto').html("Face detection in progress...");
+            $("#btnSubmit").prop("disabled", true);
+
+            // Create an FormData object
+            var data = new FormData($('#formEmployeeProfile')[0]);
+
+            $.ajax({
+                url: "/Face/Detect",
+                type: "POST",
+                enctype: 'multipart/form-data',
+                data: data,
+                processData: false,
+                contentType: false,
+                cache: false,
+                timeout: 600000,
+                success: function (result) {
+                    console.log("SUCCESS : ", result);
+
+                    // check the result
+                    if (result.length == 1) {
+                        $('#msgPhoto').html("One face detected, is it you?");
+                        $("#btnSubmit").prop("disabled", false);
+                    } else if (result.length == 0) {
+                        $('#msgPhoto').html("No face detected, please upload a face photo.");
+                    } else {
+                        $('#msgPhoto').html(result.length + " faces detected, please upload one face photo.");
+                    }
+                    // mark faces if necessary
+                    markFaces(result);
+                },
+                error: function (e) {
+                    $("#btnSubmit").prop("disabled", false);
+                }
+            });
+        }
+
+        // wire up the photo file change event for image preview
+        $("#photoFile").on("change", function () {
+            var photoFile = document.getElementById("photoFile");
+
+            var img = new Image();
+            img.onload = function () {
+                var canvas = document.getElementById("imgCanvas"); 
+
+                // calculate the new scale
+                var MAX_WIDTH = canvas.width;
+                window.ratio = img.width / MAX_WIDTH;
+                var height = Math.floor(img.height / window.ratio);
+
+                // set the calculated height
+                canvas.height = height;
+
+                // draw image
+                var ctx = canvas.getContext("2d");                
+                ctx.clearRect(0, 0, MAX_WIDTH, height);
+                ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, MAX_WIDTH, height);
+                if (document.getElementById("imgPreview")) {
+                    document.getElementById("imgPreview").style.display = "none";
+                }
+                canvas.style.display = "";
+
+                // call face detection
+                detectFaces();
+            };
+            img.src = URL.createObjectURL(photoFile.files[0]);
+        });
+    });
+</script>

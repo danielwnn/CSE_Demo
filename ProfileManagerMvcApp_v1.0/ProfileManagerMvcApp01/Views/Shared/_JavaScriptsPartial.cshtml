@@ -1,0 +1,71 @@
+<script language="JavaScript">
+    $(document).ready(function ()
+    {
+        // face detection through ajax call
+        function detectFaces() {
+            // clear message
+            $('#msgPhoto').html("Face detection in progress...");
+            $("#btnSubmit").prop("disabled", true);
+
+            // Create an FormData object
+            var data = new FormData($('#formEmployeeProfile')[0]);
+
+            $.ajax({
+                url: "/EmployeeProfile/DetectFaces",
+                type: "POST",
+                enctype: 'multipart/form-data',
+                data: data,
+                processData: false,
+                contentType: false,
+                cache: false,
+                timeout: 600000,
+                success: function (result) {
+                    console.log("SUCCESS : ", result);
+                    if (result.hasDetected) {
+                        $('#imgPreview').attr("src", result.data);
+                        window.isFaceDetected = true;
+                        $('#msgPhoto').html("One face is detected.");
+                        // valid use case, so enable the submit button
+                        $("#btnSubmit").prop("disabled", false);
+                    } else {
+                        $('#msgPhoto').html(result.data);
+                    }
+                },
+                error: function (e) {
+                    $("#btnSubmit").prop("disabled", false);
+                }
+            });
+        }
+
+        // wire up the image load event
+        $("#imgPreview").on("load", function () {
+            if (window.isFaceDetected === true) return;  // avoid loop
+
+            // show the image for create profile page after image is loaded
+            $(this)[0].style.visibility = "visible";
+
+            // reize image
+            /*
+            var MAX_WIDTH = 600,
+                imgPreview = document.getElementById("imgPreview"),
+                height = imgPreview.height,
+                width = imgPreview.width,
+                ratio = width / MAX_WIDTH;
+            imgPreview.width = MAX_WIDTH;
+            imgPreview.height = Math.floor(height / ratio);
+            imgPreview.style.visibility = "visible"; */
+
+            // detect faces and update image src because the rectangle is drawn in the backend
+            // another approach: use canvas to draw the rectangle inside the brower
+            detectFaces();
+        });
+
+        // wire up the photo file change event for image preview
+        $("#photoFile").on("change", function () {
+            var photoFile = document.getElementById("photoFile");
+            var imgPreview = document.getElementById("imgPreview");
+            imgPreview.src = URL.createObjectURL(photoFile.files[0]);
+            window.isFaceDetected = false;
+        });
+    });
+</script>

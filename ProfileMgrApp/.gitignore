@@ -1,0 +1,7 @@
+#folders
+.vs/
+ProfileMgrApp/bin
+ProfileMgrApp/obj
+ProfileMgrApp.Tests/bin
+ProfileMgrApp.Tests/obj
+
